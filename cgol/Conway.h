@@ -1,9 +1,9 @@
 #pragma once
-#ifndef GAME_H
-#define GAME_H
+#ifndef CONWAY_H
+#define CONWAY_H
 
-#define WINDOW_W 600
-#define WINDOW_H 600
+#define WINDOW_W 800
+#define WINDOW_H 800
 
 #define DEAD 0
 #define ALIVE 8

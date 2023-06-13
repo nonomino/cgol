@@ -49,20 +49,20 @@ Conway::~Conway()
 }
 
 void Conway::initialize() {
-    boardWidth = WINDOW_W / cellSize;
-    boardHeight = WINDOW_H / cellSize;
-    world = new uint8_t[boardWidth * boardHeight];
-    oldWorld = new uint8_t[boardWidth * boardHeight];
-    for (uint16_t y = 0; y < boardHeight; ++y)
-        for (uint16_t x = 0; x < boardWidth; ++x)
-            setCell(world, x, y, rand() % 5 ? DEAD : ALIVE);
+	boardWidth = WINDOW_W / cellSize;
+	boardHeight = WINDOW_H / cellSize;
+	world = new uint8_t[boardWidth * boardHeight];
+	oldWorld = new uint8_t[boardWidth * boardHeight];
+	for (uint16_t y = 0; y < boardHeight; ++y)
+	for (uint16_t x = 0; x < boardWidth; ++x)
+	setCell(world, x, y, rand() % 5 ? DEAD: ALIVE);
 }
 
 void Conway::run() {
-    isRunning = true;
-    isSimulating = false;
-    SDL_Event event;
-    uint16_t count = 0;
+	isRunning = true;
+	isSimulating = false;
+	SDL_Event eventevent;
+	uint16_t count = 0;
 
     while (isRunning) {
         while (SDL_PollEvent(&event)) {
@@ -124,8 +124,13 @@ void Conway::run() {
                 break;
             }
         }
-
+            default:
         if (isSimulating) {
+            step();
+        }
+        render();
+        SDL_Delay(1000 / fps);
+    }
             step();
         }
         render();
@@ -133,96 +138,79 @@ void Conway::run() {
     }
 }
 
-uint8_t Conway::getCellBinary(uint8_t* board, int16_t x, int16_t y)
-{
-    return getCell(board, x, y) < ALIVE ? 0 : 1;
+uint8_t Conway::getCellBinary(uint8_t* board, int16_t x, int16_t y) {
+	return getCell(board, x, y) < ALIVE ? 0: 1;
 }
 
-uint8_t Conway::getCell(uint8_t* board, int16_t x, int16_t y)
-{
-    x = (x + boardWidth) % boardWidth;
-    y = (y + boardHeight) % boardHeight;
-    return board[y * boardWidth + x];
+uint8_t Conway::getCell(uint8_t* board, int16_t x, int16_t y) {
+	x = (x + boardWidth) % boardWidth;
+	y = (y + boardHeight) % boardHeight;
+	return board[y * boardWidth + x];
 }
 
-void Conway::setCell(uint8_t* board, int16_t x, int16_t y, uint8_t value)
-{
-    x = (x + boardWidth) % boardWidth;
-    y = (y + boardHeight) % boardHeight;
-    board[y * boardWidth + x] = value;
+void Conway::setCell(uint8_t* board, int16_t x, int16_t y, uint8_t value) {
+	x = (x + boardWidth) % boardWidth;
+	y = (y + boardHeight) % boardHeight;
+	board[y * boardWidth + x] = value;
 }
 
-void Conway::step()
-{
-    uint8_t neighbours;
-    uint8_t oldCell;
-    uint8_t* tmp = oldWorld;
-    uint16_t alive = 0;
-    oldWorld = world;
-    world = tmp;
-    for (uint16_t y = 0; y < boardHeight; ++y)
-    {
-        for (uint16_t x = 0; x < boardWidth; ++x)
-        {
-            oldCell = getCell(oldWorld, x, y);
-            neighbours = getCellBinary(oldWorld, x - 1, y - 1) +
-                getCellBinary(oldWorld, x - 1, y) +
-                getCellBinary(oldWorld, x - 1, y + 1) +
-                getCellBinary(oldWorld, x, y - 1) +
-                getCellBinary(oldWorld, x, y + 1) +
-                getCellBinary(oldWorld, x + 1, y - 1) +
-                getCellBinary(oldWorld, x + 1, y) +
-                getCellBinary(oldWorld, x + 1, y + 1);
+void Conway::step() {
+	uint8_t neighbours;
+	uint8_t oldCell;
+	uint8_t* tmp = oldWorld;
+	uint16_t alive = 0;
+	oldWorld = world;
+	world = tmp;
+	for (uint16_t y = 0; y < boardHeight; ++y) {
+		for (uint16_t x = 0; x < boardWidth; ++x) {
+			oldCell = getCell(oldWorld, x, y);
+			neighbours = getCellBinary(oldWorld, x - 1, y - 1) +
+			getCellBinary(oldWorld, x - 1, y) +
+			getCellBinary(oldWorld, x - 1, y + 1) +
+			getCellBinary(oldWorld, x, y - 1) +
+			getCellBinary(oldWorld, x, y + 1) +
+			getCellBinary(oldWorld, x + 1, y - 1) +
+			getCellBinary(oldWorld, x + 1, y) +
+			getCellBinary(oldWorld, x + 1, y + 1);
 
-            if (neighbours == 3 && oldCell < ALIVE)
-            {
-                // Any dead cell with exactly three live
-                // neighbours becomes a live cell
-                setCell(world, x, y, ALIVE);
-                alive++;
-            }
-            else if (neighbours < 2 || neighbours > 3 || oldCell < ALIVE)
-            {
-                // Any live cell with fewer than two live neighbours dies
-                // Any live cell with more than three live neighbours dies
-                // Any dead cell stays dead
-                if (oldCell == DEAD)
-                {
-                    // Dead stays dead
-                    setCell(world, x, y, DEAD);
-                }
-                else
-                {
-                    // Fading out cell fades out by 1
-                    // In case it is an OLD cell, it has to
-                    // start fading out from ALIVE value
-                    setCell(world, x, y, std::min(ALIVE, (int)oldCell) - 1);
-                }
-            }
-            else if (oldCell >= ALIVE)
-            {
-                // Any live cell with two or three live neighbours lives on
-                setCell(world, x, y, std::min(OLD, oldCell + 1));
-                alive++;
-            }
-        }
-    }
-    ++alienCounter;
-    // Every 512 - random alien injection
-    if (alienCounter % 512 == 0)
-    {
-        uint16_t aliens = (boardWidth * boardHeight / 30);
-        for (uint16_t i = 0; i < aliens; i++)
-        {
-            setCell(world, rand() % boardWidth, rand() % boardHeight, ALIEN);
-        }
-    }
-}
-
+			if (neighbours == 3 && oldCell < ALIVE) {
+				// Any dead cell with exactly three live
+				// neighbours becomes a live cell
+				setCell(world, x, y, ALIVE);
+				alive++;
+			}
+			else if (neighbours < 2 || neighbours > 3 || oldCell < ALIVE) {
+				// Any live cell with fewer than two live neighbours dies
+				// Any live cell with more than three live neighbours dies
+				// Any dead cell stays dead
+				if (oldCell == DEAD) {
+					// Dead stays dead
+					setCell(world, x, y, DEAD);
+				}
+				else
+				{
+					// Fading out cell fades out by 1
+					// In case it is an OLD cell, it has to
+					// start fading out from ALIVE value
+					setCell(world, x, y, std::min(ALIVE, (int)oldCell) - 1);
+				}
+			}
+			else if (oldCell >= ALIVE) {
+				// Any live cell with two or three live neighbours lives on
+				setCell(world, x, y, std::min(OLD, oldCell + 1));
+				alive++;
+			}
+		}
+	}
+	++alienCounter;
+	// Every 512 - random alien injection
+	if (alienCounter % 512 == 0) {
+		uint16_t aliens = (boardWidth * boardHeight / 30);
+		for (uint16_t i = 0; i < aliens; i++) {
 void Conway::render() {
     SDL_SetRenderDrawColor(renderer, 32, 32, 32, 255);
     SDL_RenderClear(renderer);
-
+}
     uint32_t color;
     SDL_Rect rect;
     rect.w = std::max(1, cellSize - 1);
@@ -233,6 +221,14 @@ void Conway::render() {
             SDL_SetRenderDrawColor(renderer,
                 (color >> 24) & 0xFF,
                 (color >> 16) & 0xFF,
+                (color >> 8) & 0xFF,
+                color & 0xFF);
+            rect.x = cellSize * x;
+            rect.y = cellSize * y;
+            SDL_RenderFillRect(renderer, &rect);
+        }
+    }
+    SDL_RenderPresent(renderer);
                 (color >> 8) & 0xFF,
                 color & 0xFF);
             rect.x = cellSize * x;
