@@ -2,8 +2,8 @@
 #ifndef GAME_H
 #define GAME_H
 
-#define WINDOW_W 768
-#define WINDOW_H 768
+#define WINDOW_W 600
+#define WINDOW_H 600
 
 #define DEAD 0
 #define ALIVE 8

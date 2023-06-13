@@ -3,7 +3,14 @@
 #include <stdlib.h>
 #include <math.h>
 
-Conway::Conway(std::string name) {
+Conway::Conway(std::string name) : isRunning(true), isSimulating(false),
+                                   window(nullptr), renderer(nullptr),
+                                   texture(nullptr), world(nullptr),
+                                   oldWorld(nullptr), fps(20),
+                                   colors(new uint32_t[ALIEN + 1]), alienCounter(0),
+                                   cellSize(8), boardWidth(WINDOW_W / cellSize),
+                                   boardHeight(WINDOW_H / cellSize) {
+
     if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
         printf("Error initializing SDL: %s\n", SDL_GetError());
     }
@@ -14,9 +21,7 @@ Conway::Conway(std::string name) {
         WINDOW_H,
         SDL_WINDOW_SHOWN);
     renderer = SDL_CreateRenderer(window, -1, 0);
-    fps = 20;
-    cellSize = 8;
-    colors = new uint32_t[ALIEN + 1];
+
     for (uint8_t i = 0; i < ALIEN + 1; ++i) {
         if (i == 0)
             colors[i] = 0xFF;
@@ -34,6 +39,7 @@ Conway::Conway(std::string name) {
             colors[i] = 0xC00000FF; // Red
     }
 }
+
 
 Conway::~Conway()
 {
@@ -58,59 +64,54 @@ void Conway::run() {
     SDL_Event event;
     uint16_t count = 0;
 
-    while (isRunning)
-    {
-        while (SDL_PollEvent(&event))
-        {
-            if (event.type != SDL_QUIT && event.type != SDL_KEYDOWN && event.type != SDL_MOUSEBUTTONDOWN)
-            {
+    while (isRunning) {
+        while (SDL_PollEvent(&event)) {
+            if (event.type != SDL_QUIT && event.type != SDL_KEYDOWN && event.type != SDL_MOUSEBUTTONDOWN) {
                 continue;
             }
-            switch (event.type)
-            {
+            switch (event.type) {
             case SDL_QUIT:
                 isRunning = false;
                 break;
             case SDL_KEYDOWN:
-                if (event.key.keysym.sym == SDLK_ESCAPE || event.key.keysym.sym == SDLK_q)
-                {
+                switch (event.key.keysym.sym) {
+                case SDLK_ESCAPE:
+                case SDLK_q:
                     isRunning = false;
-                }
-                else if (event.key.keysym.sym == SDLK_SPACE)
-                {
+                    break;
+                case SDLK_SPACE:
                     isSimulating = !isSimulating;
-                }
-                else if (event.key.keysym.sym == SDLK_DOWN)
-                {
+                    break;
+                case SDLK_DOWN:
                     fps = std::max(fps - 1, 1);
-                }
-                else if (event.key.keysym.sym == SDLK_UP)
-                {
+                    break;
+                case SDLK_UP:
                     fps = std::min(fps + 1, 100);
-                }
-                else if (event.key.keysym.sym == SDLK_a)
-                {
+                    break;
+                case SDLK_a:
                     alienCounter = 511;
-                }
-                else if (event.key.keysym.sym == SDLK_c)
-                {
-                    // Clear all
+                    break;
+                case SDLK_c:
                     memset(world, DEAD, boardWidth * boardHeight * sizeof(uint8_t));
-                }
-                else if (event.key.keysym.sym == SDLK_n && !isSimulating)
-                {
-                    // Do one step
-                    step();
-                }
-                else if ((event.key.keysym.sym == SDLK_PLUS || event.key.keysym.sym == SDLK_EQUALS) && cellSize < 128)
-                {
-                    cellSize *= 2;
-                    initialize();
-                }
-                else if (event.key.keysym.sym == SDLK_MINUS && cellSize > 1)
-                {
-                    cellSize /= 2;
-                    initialize();
+                    break;
+                case SDLK_n:
+                    if (!isSimulating) {
+                        step();
+                    }
+                    break;
+                case SDLK_PLUS:
+                case SDLK_EQUALS:
+                    if (cellSize < 128) {
+                        cellSize *= 2;
+                        initialize();
+                    }
+                    break;
+                case SDLK_MINUS:
+                    if (cellSize > 1) {
+                        cellSize /= 2;
+                        initialize();
+                    }
+                    break;
                 }
                 break;
             case SDL_MOUSEBUTTONDOWN:
@@ -118,13 +119,13 @@ void Conway::run() {
                     event.button.x / cellSize,
                     event.button.y / cellSize,
                     getCellBinary(world, event.button.x / cellSize, event.button.y / cellSize) ? DEAD : ALIVE);
+                break;
             default:
                 break;
             }
         }
 
-        if (isSimulating)
-        {
+        if (isSimulating) {
             step();
         }
         render();
@@ -218,8 +219,7 @@ void Conway::step()
     }
 }
 
-void Conway::render()
-{
+void Conway::render() {
     SDL_SetRenderDrawColor(renderer, 32, 32, 32, 255);
     SDL_RenderClear(renderer);
 
@@ -227,10 +227,8 @@ void Conway::render()
     SDL_Rect rect;
     rect.w = std::max(1, cellSize - 1);
     rect.h = std::max(1, cellSize - 1);
-    for (uint16_t y = 0; y < boardHeight; ++y)
-    {
-        for (uint16_t x = 0; x < boardWidth; ++x)
-        {
+    for (uint16_t y = 0; y < boardHeight; ++y) {
+        for (uint16_t x = 0; x < boardWidth; ++x) {
             color = colors[getCell(world, x, y)];
             SDL_SetRenderDrawColor(renderer,
                 (color >> 24) & 0xFF,
