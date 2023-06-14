@@ -2,11 +2,11 @@
 #ifndef CONWAY_H
 #define CONWAY_H
 
-#define WINDOW_W 800
-#define WINDOW_H 800
+constexpr auto WINDOW_W = 600;
+constexpr auto WINDOW_H = 600;
 
-#define DEAD 0
-#define ALIVE 8
+constexpr auto DEAD = 0;
+constexpr auto ALIVE = 8;
 #define OLD (ALIVE*2)
 #define ALIEN (OLD+1)
 
